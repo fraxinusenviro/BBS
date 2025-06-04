@@ -2,38 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bird Species Mapping App v12</title>
+  <title>Bird Species Mapping App v13</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- External Styles -->
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+  <!-- 1) The map container -->
+  <div id="map" style="height: 100vh;"></div>
 
-  <!-- Map Container -->
-  <div id="map"></div>
+  <!-- 2) Modal backdrop (shared) -->
+  <div id="modalBackdrop" class="modal-backdrop" style="display: none;"></div>
 
-  <!-- Modal Backdrop -->
-  <div id="modalBackdrop" onclick="closeModal()"></div>
+  <!-- 3) Survey Metadata modal container -->
+  <div id="surveyModal" class="modal" style="display: none;"></div>
 
-  <!-- Injected Components -->
-  <div id="speciesModal"></div>
-  <div id="dataDrawer"></div>
-  <div id="surveyModal"></div>
+  <!-- 4) Species Observation modal container -->
+  <div id="speciesModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <h2>Add Species Observation</h2>
+
+      <label for="speciesSearch">Species:</label>
+      <input type="text" id="speciesSearch" autocomplete="off" placeholder="e.g. AMRO" />
+      <ul id="speciesList" class="autocomplete-list"></ul>
+
+      <label>Count:</label>
+      <div class="count-controls">
+        <button id="countMinus">−</button>
+        <span id="speciesCountDisplay">1</span>
+        <button id="countPlus">+</button>
+      </div>
+
+      <label for="breedingInput">Breeding Evidence:</label>
+      <select id="breedingInput">
+        <option value="">None</option>
+        <option value="X">Observed (X)</option>
+        <option value="H">Possible – Singing (H)</option>
+        <option value="S">Possible – Territorial (S)</option>
+        <option value="P">Probable – Pair (P)</option>
+        <option value="T">Probable – Agitated (T)</option>
+        <option value="C">Confirmed – Nest (C)</option>
+      </select>
+
+      <label for="noteInput">Notes:</label>
+      <textarea id="noteInput" rows="2" placeholder="Optional notes..."></textarea>
+
+      <div style="margin-top: 10px;">
+        <button id="speciesSaveButton">Save Observation</button>
+        <button onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5) Data drawer (bottom sheet) -->
+  <div id="dataDrawer" class="drawer" style="display: none;"></div>
+
+  <!-- 6) Placeholder for top‐center buttons -->
   <div id="masterButton"></div>
+
+  <!-- 7) Placeholder for Survey/Observation toggle (if any) -->
   <div id="countdownHUD"></div>
 
-  <!-- JS Libraries -->
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- App Scripts (ordered for dependency) -->
+  <!-- Global species list -->
   <script src="data/species_list.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/modal.js"></script>
-  <script src="js/species.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/export.js"></script>
+
+  <!-- Central app entry point -->
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
