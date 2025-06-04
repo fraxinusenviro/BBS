@@ -7,6 +7,11 @@ let userLocationMarker = null;
 let userAccuracyCircle = null;
 let overlayGroup = null;
 
+import { loadSpeciesMarkers } from './storage.js';
+import { speciesMarkers } from './storageData.js';
+import { updateTable, openSurveyModal, openDrawer } from './ui.js';
+import { showSpeciesModal, isPlacingPoint } from './modal.js'; // ✅ FIXED
+
 // Initialize map and geolocation logic
 function initializeMap() {
   map = L.map('map');
@@ -15,6 +20,12 @@ function initializeMap() {
   const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
   const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}').addTo(map);
   L.control.layers({ "OSM": osm, "Satellite": satellite }).addTo(map);
+
+  // Click to show modal for new species
+  map.on('click', e => {
+    if (!isPlacingPoint()) showSpeciesModal(e.latlng);
+
+});
 
   // Live geolocation tracking
   navigator.geolocation.watchPosition(
@@ -55,24 +66,47 @@ function initializeMap() {
     }
   );
 
-  // Click to show modal for new species
-  map.on('click', e => {
-    if (!placingPoint) showSpeciesModal(e.latlng);
-  });
-
   // Add buttons after map is ready
   addMasterButtons();
+
+  // Load saved species markers from IndexedDB
+  loadSpeciesMarkers().then(() => {
+    speciesMarkers.forEach((obs, index) => {
+      const marker = L.circleMarker(obs.latlng, {
+        radius: 10,
+        color: obs.soci ? 'red' : 'blue',
+        fillColor: 'white',
+        fillOpacity: 1,
+        weight: 2
+      }).addTo(map);
+
+      const label = L.marker([obs.latlng.lat, obs.latlng.lng + 0.0001], {
+        icon: L.divIcon({
+          className: 'marker-label',
+          html: `${obs.code} (${obs.count})`,
+          iconAnchor: [0, 10]
+        })
+      }).addTo(map);
+
+      marker.bindPopup(createSpeciesPopupHTML(index, obs));
+
+      obs.marker = marker;
+      obs.label = label;
+    });
+
+    updateTable();
+  });
 }
 
-// Add UI buttons to #masterButton
+// Add master UI buttons to the top center of the map
 function addMasterButtons() {
   const container = document.getElementById('masterButton');
   if (!container) return;
 
   container.innerHTML = `
-    <button onclick="document.getElementById('surveyModal').style.display = 'block'">Survey Metadata</button>
-    <button onclick="openDrawer()">Observations</button>
-    <button onclick="toggleOverlay()">Overlay</button>
+    <button id="btnSurvey">Survey Metadata</button>
+    <button id="btnDrawer">Observations</button>
+    <button id="btnOverlay">Overlay</button>
   `;
 
   container.style.position = 'absolute';
@@ -82,13 +116,15 @@ function addMasterButtons() {
   container.style.zIndex = 2000;
   container.style.display = 'flex';
   container.style.gap = '10px';
+
+  document.getElementById('btnSurvey')?.addEventListener('click', openSurveyModal);
+  document.getElementById('btnDrawer')?.addEventListener('click', openDrawer);
+  document.getElementById('btnOverlay')?.addEventListener('click', toggleOverlay);
 }
 
-window.addMasterButtons = addMasterButtons;
-
-// Utility to calculate destination from point, bearing, and distance
+// Calculate a destination point given a start latlng, bearing (deg), and distance (meters)
 function destinationPoint(latlng, bearing, distance) {
-  const R = 6378137; // Earth radius in meters
+  const R = 6378137;
   const δ = distance / R;
   const θ = bearing * Math.PI / 180;
   const φ1 = latlng.lat * Math.PI / 180;
@@ -112,13 +148,21 @@ function toggleOverlay() {
     const center = observerLocation;
     overlayGroup = L.layerGroup();
 
-    [50, 100, 150].forEach(r => {
-      L.circle(center, { radius: r, color: 'red', dashArray: '4', fillOpacity: 0 }).addTo(overlayGroup);
+    [50, 100, 150].forEach(radius => {
+      L.circle(center, {
+        radius: radius,
+        color: 'red',
+        dashArray: '4',
+        fillOpacity: 0
+      }).addTo(overlayGroup);
     });
 
     [0, 45, 90, 135, 180, 225, 270, 315].forEach(angle => {
       const end = destinationPoint(center, angle, 150);
-      L.polyline([center, end], { color: 'red', weight: 1 }).addTo(overlayGroup);
+      L.polyline([center, end], {
+        color: 'red',
+        weight: 1
+      }).addTo(overlayGroup);
     });
 
     const dirs = { N: 0, E: 90, S: 180, W: 270 };
@@ -133,8 +177,8 @@ function toggleOverlay() {
   }
 }
 
-// Expose public functions
 window.toggleOverlay = toggleOverlay;
 
-// Start everything once DOM is ready
 document.addEventListener('DOMContentLoaded', initializeMap);
+
+export { map, observerLocation };
