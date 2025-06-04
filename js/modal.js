@@ -1,11 +1,13 @@
+import { updateSpeciesList, adjustCount, saveSpeciesObservation } from './species.js';
+import { observer, pointID } from './surveyGlobals.js';
+
 let placingPoint = false;
 let currentLatLng = null;
 
-// Show species modal at clicked location
+/**
+ * Displays the species modal for the given lat/lng, if metadata is filled in.
+ */
 function showSpeciesModal(latlng) {
-  const observer = document.getElementById('observer')?.value.trim();
-  const pointID = document.getElementById('pointID')?.value.trim();
-
   if (!observer || !pointID) {
     alert("Please enter both Survey Point ID and Observer before placing species.");
     return;
@@ -16,46 +18,64 @@ function showSpeciesModal(latlng) {
 
   const modal = document.getElementById('speciesModal');
   const backdrop = document.getElementById('modalBackdrop');
+  if (!modal || !backdrop) return;
 
-  if (!modal || !backdrop) {
-    console.error("Modal or backdrop element not found in DOM.");
-    return;
-  }
+  // Reset modal fields safely
+  const searchInput = document.getElementById('speciesSearch');
+  const countDisplay = document.getElementById('speciesCountDisplay');
+  const noteInput = document.getElementById('noteInput');
+  const breedingInput = document.getElementById('breedingInput');
+
+  if (searchInput) searchInput.value = '';
+  if (countDisplay) countDisplay.textContent = '1';
+  if (noteInput) noteInput.value = '';
+  if (breedingInput) breedingInput.value = '';
 
   modal.style.display = 'block';
   backdrop.style.display = 'block';
 
-  // Clear search input if it exists
-  const searchInput = document.getElementById('speciesSearch');
-  if (searchInput) searchInput.value = '';
-
-  // Populate species list
-  if (typeof updateSpeciesList === 'function') {
-    updateSpeciesList('');
-  } else {
-    console.warn("updateSpeciesList function not available.");
-  }
+  updateSpeciesList('');
 }
 
-// Close modal (for cancel or after placing point)
+/**
+ * Closes the species modal and resets state.
+ */
 function closeModal() {
   placingPoint = false;
   currentLatLng = null;
-
-  const modal = document.getElementById('speciesModal');
-  const backdrop = document.getElementById('modalBackdrop');
-
-  if (modal) modal.style.display = 'none';
-  if (backdrop) backdrop.style.display = 'none';
+  document.getElementById('speciesModal')?.style.setProperty('display', 'none');
+  document.getElementById('modalBackdrop')?.style.setProperty('display', 'none');
 }
 
-// Optional: ESC key to close modal
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') {
-    closeModal();
-  }
-});
+/**
+ * Returns whether a point is currently being placed.
+ */
+function isPlacingPoint() {
+  return placingPoint;
+}
 
-// Expose modal controls globally
-window.showSpeciesModal = showSpeciesModal;
+export { showSpeciesModal, closeModal, currentLatLng, isPlacingPoint };
+
+// For inline button onclicks
 window.closeModal = closeModal;
+
+// 🔁 Wait for DOM to bind elements
+document.addEventListener('DOMContentLoaded', () => {
+  const backdrop = document.getElementById('modalBackdrop');
+  if (backdrop) backdrop.addEventListener('click', closeModal);
+
+  const searchInput = document.getElementById('speciesSearch');
+  if (searchInput) {
+    searchInput.addEventListener('input', e => {
+      updateSpeciesList(e.target.value);
+    });
+  }
+
+  const plus = document.getElementById('countPlus');
+  const minus = document.getElementById('countMinus');
+  if (plus) plus.addEventListener('click', () => adjustCount(1));
+  if (minus) minus.addEventListener('click', () => adjustCount(-1));
+
+  const saveButton = document.getElementById('speciesSaveButton');
+  if (saveButton) saveButton.addEventListener('click', saveSpeciesObservation);
+});
