@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Bird Species Mapping App v13</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Font Awesome Symbols -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -23,9 +27,7 @@
   <div id="speciesModal" class="modal" style="display: none;">
     <div class="modal-content">
       <h2>Add Species Observation</h2>
-
-      <label for="speciesSearch">Species:</label>
-      <input type="text" id="speciesSearch" autocomplete="off" placeholder="e.g. AMRO" />
+      <input type="text" id="speciesSearch" autocomplete="off" placeholder="Search for Species" />
       <ul id="speciesList" class="autocomplete-list"></ul>
 
       <label>Count:</label>
@@ -45,8 +47,11 @@
         <option value="T">Probable – Agitated (T)</option>
         <option value="C">Confirmed – Nest (C)</option>
       </select>
+		
+		<input type="text" id="passHt" name="passHt" placeholder="Flyover Pass Height"/>
+    	<input type="text" id="flightDir" name="flightDir" placeholder="Flyover Direction"/>
+  		
 
-      <label for="noteInput">Notes:</label>
       <textarea id="noteInput" rows="2" placeholder="Optional notes..."></textarea>
 
       <div style="margin-top: 10px;">
@@ -64,6 +69,48 @@
 
   <!-- 7) Placeholder for Survey/Observation toggle (if any) -->
   <div id="countdownHUD"></div>
+
+<!-- Timer -->
+<div id="survey-timer-strip">
+  <label for="surveyLength">Survey Length (min):</label>
+  <input id="surveyLength" type="number" value="10" min="1" />
+  <div id="timerDisplay">10:00</div>
+  <button id="startTimerBtn" title="Start"><i class="fas fa-play"></i></button>
+  <button id="pauseTimerBtn" title="Pause"><i class="fas fa-pause"></i></button>
+  <button id="resetTimerBtn" title="Reset"><i class="fas fa-redo-alt"></i></button>
+  
+</div>
+
+<!-- Instructions Modal -->
+<div id="instructionsModal">
+  <div class="modal-content">
+    <h2>Instructions: </h2>
+    <ul style="padding-left: 20px;">
+      <li>
+  <h3>SURVEY SETUP</h3>
+  Navigate to your pre-determined survey point and enter all species metadata before beginning the survey. When starting, orient yourself to true north to accurately estimate positions for your observations. A toggleable distance/bearing overlay—featuring concentric distance bands (50 m, 100 m, 150 m, 200 m) and cardinal directions—is provided to assist with spatial placement of observations. Range and bearing are automatically calculated relative to the observer's current position on the map.
+</li>
+
+<li>
+  <h3>CONDUCTING SURVEY</h3>
+  Start the timer. When a species is detected visually or acoustically, simply tap the map at the estimated location of the observation. Use the species search bar to locate and select a species—valid search terms include any part of the common name or the four-letter banding code. After adding a new record, you can adjust the count, add optional notes or breeding codes, and enter flyover height and flight direction. Observations are not committed to memory until explicitly saved.
+</li>
+
+<li>
+  <h3>EDITING & DELETING OBSERVATIONS</h3>
+  Existing observation points can be edited at any time during or after the survey in two ways: (1) by tapping an observation point and editing its details in the popup, or (2) by opening the data drawer and tapping the magnifying glass icon to access the same popup. Individual records can be permanently deleted using the [X] button, available in both the data drawer and the observation popup.
+</li>
+
+<li>
+  <h3>DATA STORAGE</h3>
+  All observation data, including from current and past surveys, is cached in a local database to support offline functionality. Cached records are displayed as small black points with black labels, while current survey records appear as larger white points with white labels. Survey data can be exported via the data drawer in CSV (non-spatial) or GeoJSON/KML (spatial) formats. By default, all observations currently stored in the local database are included in the export.
+</li>
+    </ul>
+    <div class="button-row">
+      <button onclick="closeInstructions()">Close</button>
+    </div>
+  </div>
+</div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
