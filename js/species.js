@@ -75,10 +75,10 @@ function saveSpeciesObservation() {
 
   // Marker and label
   const marker = L.circleMarker(latlng, {
-    radius: 10,
-    color: species.soci ? 'red' : 'blue',
+    radius: 15,
+    color: species.soci ? 'red' : 'green',
     fillColor: 'white',
-    fillOpacity: 1,
+    fillOpacity: 0.6,
     weight: 2
   }).addTo(map);
 
@@ -86,7 +86,7 @@ function saveSpeciesObservation() {
     icon: L.divIcon({
       className: 'marker-label',
       html: `${species.code} (${count})`,
-      iconAnchor: [0, 10]
+      iconAnchor: [0, 20]
     })
   }).addTo(map);
 
@@ -127,16 +127,23 @@ function saveSpeciesObservation() {
 }
 
 // --- Popup HTML ---
-function createSpeciesPopupHTML(index, code, count, breeding, note) {
+export function createSpeciesPopupHTML(index, code, count, breeding, note, passHeight = '', flightDir = '') {
   const popup = document.createElement('div');
-  popup.className = 'popup-content';
+  popup.className = 'popup-content compact';
   popup.innerHTML = `
-    <b>${code}</b><br>
-    Count: <span id="count-${index}">${count}</span><br>
-    <button onclick="incrementCount(${index})">+</button>
-    <button onclick="decrementCount(${index})">−</button><br><br>
+    <div style="font-weight: 600; margin-bottom: 6px;">${code}</div>
 
-    <label>Breeding Evidence:<br>
+    <div class="form-row">
+      <label>Count:</label>
+      <div class="counter-inline">
+        <button onclick="decrementCount(${index})">−</button>
+        <span id="count-${index}">${count}</span>
+        <button onclick="incrementCount(${index})">+</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Breeding:</label>
       <select id="breeding-${index}">
         <option value="">None</option>
         <option value="X" ${breeding === 'X' ? 'selected' : ''}>Observed (X)</option>
@@ -146,14 +153,37 @@ function createSpeciesPopupHTML(index, code, count, breeding, note) {
         <option value="T" ${breeding === 'T' ? 'selected' : ''}>Probable – Agitated (T)</option>
         <option value="C" ${breeding === 'C' ? 'selected' : ''}>Confirmed – Nest (C)</option>
       </select>
-    </label><br>
+    </div>
 
-    <label>Note:<br>
-      <textarea id="note-${index}" rows="2" style="width:100%;">${note}</textarea>
-    </label><br>
+    <div class="form-row">
+      <label>Flyover Height:</label>
+      <input type="text" id="passHeight-${index}" value="${passHeight}" placeholder="e.g., 50m" />
+    </div>
 
-    <button onclick="updateCount(${index})">Update</button>
-    <button onclick="deleteMarker(${index})">❌</button>
+    <div class="form-row">
+      <label>Direction:</label>
+      <select id="flightDir-${index}">
+        <option value="">Select</option>
+        <option value="N" ${flightDir === 'N' ? 'selected' : ''}>North</option>
+        <option value="NE" ${flightDir === 'NE' ? 'selected' : ''}>NE</option>
+        <option value="E" ${flightDir === 'E' ? 'selected' : ''}>East</option>
+        <option value="SE" ${flightDir === 'SE' ? 'selected' : ''}>SE</option>
+        <option value="S" ${flightDir === 'S' ? 'selected' : ''}>South</option>
+        <option value="SW" ${flightDir === 'SW' ? 'selected' : ''}>SW</option>
+        <option value="W" ${flightDir === 'W' ? 'selected' : ''}>West</option>
+        <option value="NW" ${flightDir === 'NW' ? 'selected' : ''}>NW</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <label>Notes:</label>
+      <textarea id="note-${index}" rows="2">${note}</textarea>
+    </div>
+
+    <div class="form-row" style="justify-content: space-between;">
+      <button onclick="updateCount(${index})">Save</button>
+      <button class="danger" onclick="deleteMarker(${index})">Delete</button>
+    </div>
   `;
   return popup;
 }
@@ -177,12 +207,17 @@ function updateCount(index) {
   const countEl = document.getElementById(`count-${index}`);
   const breedEl = document.getElementById(`breeding-${index}`);
   const noteEl = document.getElementById(`note-${index}`);
+  const passHtEl = document.getElementById(`passHeight-${index}`);
+  const flightDirEl = document.getElementById(`flightDir-${index}`);
   const record = speciesMarkers[index];
+
   if (!countEl || !breedEl || !record) return;
 
   record.count = parseInt(countEl.textContent || '1', 10);
   record.breeding = breedEl.value;
   record.note = noteEl?.value || '';
+  record.passHt = passHtEl?.value || '';
+  record.flightDir = flightDirEl?.value || '';
 
   record.label.setIcon(L.divIcon({
     className: 'marker-label',
@@ -204,6 +239,8 @@ export {
   decrementCount,
   updateCount
 };
+
+
 
 window.adjustCount = adjustCount;
 window.saveSpeciesObservation = saveSpeciesObservation;

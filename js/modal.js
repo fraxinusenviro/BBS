@@ -9,7 +9,7 @@ let currentLatLng = null;
  */
 function showSpeciesModal(latlng) {
   if (!observer || !pointID) {
-    alert("Please enter both Survey Point ID and Observer before placing species.");
+    alert("Please complete metadata input before placing observations.");
     return;
   }
 
@@ -58,11 +58,45 @@ export { showSpeciesModal, closeModal, currentLatLng, isPlacingPoint };
 
 // For inline button onclicks
 window.closeModal = closeModal;
+window.showInstructions = showInstructions;
+window.closeInstructions = closeInstructions;
+
+//App Instructions
+function showInstructions() {
+  document.getElementById('instructionsModal')?.style.setProperty('display', 'block');
+  document.getElementById('modalBackdrop')?.style.setProperty('display', 'block');
+}
+
+function closeInstructions() {
+  document.getElementById('instructionsModal')?.style.setProperty('display', 'none');
+  document.getElementById('modalBackdrop')?.style.setProperty('display', 'none');
+}
+
+// Optional: ESC key closes instructions
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeInstructions();
+});
 
 // 🔁 Wait for DOM to bind elements
 document.addEventListener('DOMContentLoaded', () => {
-  const backdrop = document.getElementById('modalBackdrop');
-  if (backdrop) backdrop.addEventListener('click', closeModal);
+  const plus = document.getElementById('countPlus');
+  const minus = document.getElementById('countMinus');
+
+  if (plus && !plus.dataset.bound) {
+    plus.addEventListener('click', () => adjustCount(1));
+    plus.dataset.bound = 'true';
+  }
+
+  if (minus && !minus.dataset.bound) {
+    minus.addEventListener('click', () => adjustCount(-1));
+    minus.dataset.bound = 'true';
+  }
+
+  const saveButton = document.getElementById('speciesSaveButton');
+  if (saveButton && !saveButton.dataset.bound) {
+    saveButton.addEventListener('click', saveSpeciesObservation);
+    saveButton.dataset.bound = 'true';
+  }
 
   const searchInput = document.getElementById('speciesSearch');
   if (searchInput) {
@@ -71,11 +105,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const plus = document.getElementById('countPlus');
-  const minus = document.getElementById('countMinus');
-  if (plus) plus.addEventListener('click', () => adjustCount(1));
-  if (minus) minus.addEventListener('click', () => adjustCount(-1));
-
-  const saveButton = document.getElementById('speciesSaveButton');
-  if (saveButton) saveButton.addEventListener('click', saveSpeciesObservation);
+  const backdrop = document.getElementById('modalBackdrop');
+  if (backdrop) backdrop.addEventListener('click', closeModal);
 });

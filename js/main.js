@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('speciesSearch')?.addEventListener('input', e => {
     updateSpeciesList(e.target.value);
   });
-  document.getElementById('countPlus')?.addEventListener('click', () => adjustCount(1));
-  document.getElementById('countMinus')?.addEventListener('click', () => adjustCount(-1));
+  //document.getElementById('countPlus')?.addEventListener('click', () => adjustCount(1));
+  //document.getElementById('countMinus')?.addEventListener('click', () => adjustCount(-1));
   document.getElementById('speciesSaveButton')?.addEventListener('click', saveSpeciesObservation);
 });

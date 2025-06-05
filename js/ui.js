@@ -40,6 +40,7 @@ function openSurveyModal() {
   if (!modal || !backdrop) return;
 
   // Prefill modal with current metadata values
+  document.getElementById('projectIDInput').value = projectID || '';
   document.getElementById('observerInput').value = observer || '';
   document.getElementById('pointIDInput').value = pointID || '';
   document.getElementById('surveyTypeInput').value = surveyType || '';
@@ -56,7 +57,8 @@ function openSurveyModal() {
 
 function closeSurveyModal() {
   setSurveyMetadata({
-    observer: document.getElementById('observerInput').value.trim(),
+    projectID: document.getElementById('projectIDInput').value.trim(),
+	 observer: document.getElementById('observerInput').value.trim(),
     pointID: document.getElementById('pointIDInput').value.trim(),
     surveyType: document.getElementById('surveyTypeInput').value.trim(),
     surveyLength: document.getElementById('surveyLengthInput').value.trim(),
@@ -80,20 +82,27 @@ function updateTable() {
     <div class="drawer">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
         <div style="display: flex; gap: 10px;">
-          <button onclick="exportSpeciesCSV()">Export CSV</button>
+          <button onclick="closeDrawer()">X</button>
+			 <button onclick="exportSpeciesCSV()">Export CSV</button>
           <button onclick="exportSpeciesGeoJSON()">Export GeoJSON</button>
           <button onclick="exportSpeciesKML()">Export KML</button>
         </div>
-        <button onclick="closeDrawer()">❌</button>
+        
       </div>
-      <h2 style="margin-top: 0;">Observed Species</h2>
+      <h2 style="margin-top: 0;">Species Obs. w/ select attributes </h2>
       <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
         <thead>
           <tr>
-            <th>Project</th><th>Point</th><th>Observer</th><th>Type</th><th>Length</th>
-            <th>Wind</th><th>Dir</th><th>Temp</th><th>Precip</th><th>Habitat</th>
-            <th>Species</th><th>Count</th><th>Range</th><th>Bearing</th>
-            <th>Pass Ht</th><th>Flight Dir</th><th>Note</th><th>Time</th>
+            <th>Point ID</th>
+			   <th>Observer</th>
+				<th>Species</th>
+            <th>Count</th>
+            <th>Bearing</th>
+            <th>Range</th>
+            <th>Pass Ht</th>
+            <th>Flight Dir</th>
+				<th>Breeding</th>
+            <th>Note</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -106,24 +115,16 @@ function updateTable() {
   speciesMarkers.forEach((obs, i) => {
     const row = document.createElement('tr');
     row.innerHTML = `
-      <td>${obs.projectID || ''}</td>
       <td>${obs.pointID || ''}</td>
-      <td>${obs.observer || ''}</td>
-      <td>${obs.surveyType || ''}</td>
-      <td>${obs.surveyLength || ''}</td>
-      <td>${obs.wind || ''}</td>
-      <td>${obs.windDir || ''}</td>
-      <td>${obs.tempC || ''}</td>
-      <td>${obs.precip || ''}</td>
-      <td>${obs.siteHabitat || ''}</td>
-      <td>${obs.code || ''}</td>
+		<td>${obs.observer || ''}</td>
+	   <td>${obs.code || ''}</td>
       <td>${obs.count || ''}</td>
-      <td>${obs.range || ''}</td>
       <td>${obs.bearing || ''}</td>
+      <td>${obs.range || ''}</td>
       <td>${obs.passHt || ''}</td>
       <td>${obs.flightDir || ''}</td>
+		<td>${obs.breeding || ''}</td>
       <td>${obs.note || ''}</td>
-      <td>${obs.timestamp}</td>
       <td>
         <button onclick="zoomToMarker(${i})">🔍</button>
         <button onclick="deleteMarker(${i})" style="color:red;">❌</button>
@@ -161,16 +162,17 @@ function injectSurveyModal() {
   container.innerHTML = `
     <div class="modal-content">
       <h2>Survey Metadata</h2>
-      <label>Observer: <input type="text" id="observerInput" /></label><br>
+      <label>Project ID: <input type="text" id="projectIDInput" /></label><br>
+		<label>Observer: <input type="text" id="observerInput" /></label><br>
       <label>Survey Point ID: <input type="text" id="pointIDInput" /></label><br>
       <label>Survey Type: <input type="text" id="surveyTypeInput" /></label><br>
       <label>Survey Length (min): <input type="number" id="surveyLengthInput" /></label><br>
-      <label>Wind: <input type="text" id="windInput" /></label><br>
+      <label>Wind Speed: <input type="text" id="windInput" /></label><br>
       <label>Wind Direction: <input type="text" id="windDirInput" /></label><br>
       <label>Temperature (°C): <input type="number" id="tempCInput" /></label><br>
       <label>Precipitation: <input type="text" id="precipInput" /></label><br>
       <label>Habitat: <input type="text" id="siteHabitatInput" /></label><br><br>
-      <button onclick="closeSurveyModal()">Close</button>
+      <button onclick="closeSurveyModal()">Save and Close</button>
     </div>
   `;
 }
@@ -192,8 +194,65 @@ export {
   deleteMarker
 };
 
+// --- Survey Timer HUD ---
+let surveyTotalSeconds = 0;
+let surveyRemainingSeconds = 0;
+let surveyTimerInterval = null;
+
+function updateSurveyTimerDisplay() {
+  const mins = Math.floor(surveyRemainingSeconds / 60).toString().padStart(2, '0');
+  const secs = (surveyRemainingSeconds % 60).toString().padStart(2, '0');
+  document.getElementById('timerDisplay').textContent = `${mins}:${secs}`;
+}
+
+function startSurveyTimer() {
+  if (!surveyTimerInterval) {
+    const minsInput = parseInt(document.getElementById('surveyLength').value, 10);
+    if (surveyRemainingSeconds === 0 || minsInput * 60 !== surveyTotalSeconds) {
+      surveyTotalSeconds = minsInput * 60;
+      surveyRemainingSeconds = surveyTotalSeconds;
+    }
+    surveyTimerInterval = setInterval(() => {
+      if (surveyRemainingSeconds > 0) {
+        surveyRemainingSeconds--;
+        updateSurveyTimerDisplay();
+      } else {
+        clearInterval(surveyTimerInterval);
+        surveyTimerInterval = null;
+        alert("Survey complete!");
+      }
+    }, 1000);
+  }
+}
+
+function pauseSurveyTimer() {
+  clearInterval(surveyTimerInterval);
+  surveyTimerInterval = null;
+}
+
+function resetSurveyTimer() {
+  pauseSurveyTimer();
+  const minsInput = parseInt(document.getElementById('surveyLength').value, 10);
+  surveyTotalSeconds = minsInput * 60;
+  surveyRemainingSeconds = surveyTotalSeconds;
+  updateSurveyTimerDisplay();
+}
+
+// --- Wire up buttons after DOM loads ---
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('startTimerBtn').addEventListener('click', startSurveyTimer);
+  document.getElementById('pauseTimerBtn').addEventListener('click', pauseSurveyTimer);
+  document.getElementById('resetTimerBtn').addEventListener('click', resetSurveyTimer);
+
+  resetSurveyTimer(); // Initialize display
+});
+
 window.closeSurveyModal = closeSurveyModal;
 window.closeDrawer = closeDrawer;
 window.openSurveyModal = openSurveyModal;
 window.zoomToMarker = zoomToMarker;
 window.deleteMarker = deleteMarker;
+// --- Expose export functions globally ---
+window.exportSpeciesCSV = exportSpeciesCSV;
+window.exportSpeciesGeoJSON = exportSpeciesGeoJSON;
+window.exportSpeciesKML = exportSpeciesKML;

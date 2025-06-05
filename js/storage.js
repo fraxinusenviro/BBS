@@ -1,10 +1,10 @@
 // storage.js — handles persistence of species markers using IndexedDB
 
 import { updateTable } from './ui.js';
-import { map } from './map.js'; // assuming `map` is exported
-import { deleteMarker } from './ui.js'; // used in popup HTML
-import { speciesMarkers } from './storageData.js'; // shared state array (see note below)
-
+import { map } from './map.js';
+import { deleteMarker } from './ui.js';
+import { speciesMarkers } from './storageData.js';
+import { createSpeciesPopupHTML } from './species.js'; // Popup generator
 
 const DB_NAME = 'SpeciesSurveyDB';
 const DB_VERSION = 1;
@@ -75,48 +75,31 @@ export async function loadSpeciesMarkers() {
       const latlng = L.latLng(data.latlng.lat, data.latlng.lng);
 
       const marker = L.circleMarker(latlng, {
-        radius: 10,
-        color: data.soci ? 'red' : 'blue',
-        fillColor: 'white',
-        fillOpacity: 1,
+        radius: 6,
+        color: data.soci ? 'red' : 'green',
+        fillColor: 'black',
+        fillOpacity: 0.6,
         weight: 2
       }).addTo(map);
 
       const label = L.divIcon({
-        className: 'marker-label',
+        className: 'DBmarker-label',
+		  //color: black,
         html: `${data.code} (${data.count})`,
         iconAnchor: [0, 10]
       });
 
       const labelMarker = L.marker([latlng.lat, latlng.lng + 0.0001], { icon: label }).addTo(map);
 
-      const popup = document.createElement('div');
-      popup.className = 'popup-content';
-      popup.innerHTML = `
-        <b>${data.code}</b><br>
-        Count: <span id="count-${index}">${data.count}</span><br>
-        <button onclick="incrementCount(${index})">+</button>
-        <button onclick="decrementCount(${index})">−</button><br><br>
-
-        <label>Breeding Evidence:<br>
-          <select id="breeding-${index}">
-            <option value="">Select</option>
-            <option value="X">Observed (X)</option>
-            <option value="H">Possible (H)</option>
-            <option value="S">Possible (S)</option>
-            <option value="P">Probable (P)</option>
-            <option value="T">Probable (T)</option>
-            <option value="C">Confirmed (C)</option>
-          </select>
-        </label><br>
-
-        <label>Notes:<br>
-          <textarea id="note-${index}" rows="2" style="width:100%;">${data.note || ''}</textarea>
-        </label><br>
-
-        <button onclick="updateCount(${index})">Update</button>
-        <button onclick="deleteMarker(${index})">❌</button>
-      `;
+      const popup = createSpeciesPopupHTML(
+        index,
+        data.code,
+        data.count,
+        data.breeding || '',
+        data.note || '',
+        data.passHt || '',
+        data.flightDir || ''
+      );
 
       marker.bindPopup(popup);
 
@@ -166,7 +149,9 @@ export function syncToIndexedDB() {
         note: marker.note,
         range: marker.range,
         bearing: marker.bearing,
-        timestamp: marker.timestamp
+        timestamp: marker.timestamp,
+        passHt: marker.passHt || '',
+        flightDir: marker.flightDir || ''
       };
       store.add(data);
     });

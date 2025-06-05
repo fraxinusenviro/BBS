@@ -15,6 +15,7 @@ import { showSpeciesModal, isPlacingPoint } from './modal.js'; // ✅ FIXED
 // Initialize map and geolocation logic
 function initializeMap() {
   map = L.map('map');
+  map.doubleClickZoom.disable();
 
   // Base layers
   const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
@@ -42,7 +43,7 @@ function initializeMap() {
         userLocationMarker = L.circleMarker(latlng, {
           radius: 6,
           color: '#00f',
-          fillColor: '#00f',
+          fillColor: 'white',
           fillOpacity: 1,
           weight: 1
         }).addTo(map);
@@ -73,10 +74,10 @@ function initializeMap() {
   loadSpeciesMarkers().then(() => {
     speciesMarkers.forEach((obs, index) => {
       const marker = L.circleMarker(obs.latlng, {
-        radius: 10,
+        radius: 20,
         color: obs.soci ? 'red' : 'blue',
         fillColor: 'white',
-        fillOpacity: 1,
+        fillOpacity: 0.8,
         weight: 2
       }).addTo(map);
 
@@ -104,18 +105,19 @@ function addMasterButtons() {
   if (!container) return;
 
   container.innerHTML = `
-    <button id="btnSurvey">Survey Metadata</button>
-    <button id="btnDrawer">Observations</button>
-    <button id="btnOverlay">Overlay</button>
+    <button onclick="showInstructions()" title="Help"><i class="fas fa-info-circle fa-2x"></i></button>
+    <button id="btnSurvey" title="Survey Metadata"><i class="fas fa-clipboard-list fa-2x"></i></button>
+    <button id="btnDrawer" title="Observations"><i class="fas fa-rectangle-list"></i></button>
+    <button id="btnOverlay" title="Overlay"><i class="fas fa-life-ring fa-2x"></i></button>
   `;
 
   container.style.position = 'absolute';
-  container.style.top = '10px';
-  container.style.left = '50%';
-  container.style.transform = 'translateX(-50%)';
+  container.style.top = '100px';
+  container.style.left = '30px';
   container.style.zIndex = 2000;
   container.style.display = 'flex';
-  container.style.gap = '10px';
+  container.style.flexDirection = 'column';
+  container.style.gap = '12px';
 
   document.getElementById('btnSurvey')?.addEventListener('click', openSurveyModal);
   document.getElementById('btnDrawer')?.addEventListener('click', openDrawer);
@@ -148,26 +150,42 @@ function toggleOverlay() {
     const center = observerLocation;
     overlayGroup = L.layerGroup();
 
-    [50, 100, 150].forEach(radius => {
+    // Concentric circles with labels
+    [50, 100, 150, 200].forEach(radius => {
+      // Draw circle
       L.circle(center, {
         radius: radius,
         color: 'red',
-        dashArray: '4',
+        dashArray: '5',
+        weight: 2,
         fillOpacity: 0
       }).addTo(overlayGroup);
-    });
 
-    [0, 45, 90, 135, 180, 225, 270, 315].forEach(angle => {
-      const end = destinationPoint(center, angle, 150);
-      L.polyline([center, end], {
-        color: 'red',
-        weight: 1
+      // Label the circle on the north axis
+      const labelPos = destinationPoint(center, 0, radius); // 0° = north
+      L.marker(labelPos, {
+        icon: L.divIcon({
+          className: 'circle-label',
+          html: `<span>${radius} m</span>`,
+          iconAnchor: [0, 0]
+        })
       }).addTo(overlayGroup);
     });
 
-    const dirs = { N: 0, E: 90, S: 180, W: 270 };
+    // Radial lines (bearings)
+    [0, 45, 90, 135, 180, 225, 270, 315].forEach(angle => {
+      const end = destinationPoint(center, angle, 200);
+      L.polyline([center, end], {
+        color: 'yellow',
+        dashArray: '5',
+        weight: 0.5
+      }).addTo(overlayGroup);
+    });
+
+    // Cardinal direction labels
+    const dirs = {N: 0,E: 90,S: 180,W: 270 };
     for (const [txt, angle] of Object.entries(dirs)) {
-      const pt = destinationPoint(center, angle, 160);
+      const pt = destinationPoint(center, angle, 215);
       L.marker(pt, {
         icon: L.divIcon({ className: 'target-label', html: txt })
       }).addTo(overlayGroup);
