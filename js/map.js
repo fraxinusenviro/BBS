@@ -99,15 +99,15 @@ function initializeMap() {
   });
 }
 
-// Add master UI buttons to the top center of the map
+// Add master UI buttons 
 function addMasterButtons() {
   const container = document.getElementById('masterButton');
   if (!container) return;
 
   container.innerHTML = `
-    <button onclick="showInstructions()" title="Help"><i class="fas fa-info-circle fa-2x"></i></button>
+    <button onclick="showInstructions()" title="Help"><i class="fas fa-circle-question fa-2x"></i></button>
     <button id="btnSurvey" title="Survey Metadata"><i class="fas fa-clipboard-list fa-2x"></i></button>
-    <button id="btnDrawer" title="Observations"><i class="fas fa-rectangle-list"></i></button>
+    <button id="btnDrawer" title="Observations"><i class="fas fa-rectangle-list fa-2x"></i></button>
     <button id="btnOverlay" title="Overlay"><i class="fas fa-life-ring fa-2x"></i></button>
   `;
 
