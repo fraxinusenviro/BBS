@@ -38,16 +38,23 @@ html, body, #map {
   border: 1px solid #444;
   border-radius: 8px;
   padding: 16px;
-  max-width: 320px;
-  width: 90%;
-  max-height: 80vh;
+  width: 90vw;      
+  height: 90vh;       
   overflow-y: auto;
   box-shadow: 0 0 12px rgba(0, 0, 0, 0.6);
   box-sizing: border-box;
 }
 
+
+.modal-content h1 {
+  color: steelblue;  
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
 .modal-content h2 {
-  color: steelblue;  /* or any custom color */
+  color: steelblue;  
   font-size: 1.25rem;
   font-weight: bold;
   margin-top: 0;
@@ -431,22 +438,22 @@ html, body, #map {
 }
 
 #survey-timer-strip {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(20, 20, 20, 0.6);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  background: rgba(20, 20, 20, 0.7);
   backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 6px 12px;
   gap: 12px;
   color: white;
   font-family: 'Segoe UI', sans-serif;
-  z-index: 1000;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  z-index: 3000;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.4);
 }
 
 #survey-timer-strip button {
@@ -462,6 +469,12 @@ html, body, #map {
 
 #survey-timer-strip button:hover {
   background: rgba(255, 255, 255, 0.15);
+}
+
+#surveyLength {
+  width: 50px;
+  font-size: 0.9em;
+  text-align: center;
 }
 
 #timerDisplay {
