@@ -125,11 +125,13 @@ export function exportSpeciesKML() {
 
 // Utility to trigger file download
 function triggerDownload(content, filename, type) {
-  const blob = new Blob([content], { type });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.fileExport) {
+    window.webkit.messageHandlers.fileExport.postMessage({
+      filename: filename,
+      mime: type,
+      content: content
+    });
+  } else {
+    console.warn("Native file export handler not available.");
+  }
 }
