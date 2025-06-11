@@ -1,14 +1,54 @@
 import { speciesMarkers } from './storageData.js';
 
+// Utility: get today's date as YYYYMMDD
+function todayString() {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}`;
+}
+
+// Utility: trigger file download (native or browser fallback)
+function triggerDownload(content, filename, mime) {
+  // Native WKWebView handler (iOS)
+  if (
+    window.webkit &&
+    window.webkit.messageHandlers &&
+    window.webkit.messageHandlers.fileExport
+  ) {
+    window.webkit.messageHandlers.fileExport.postMessage({
+      filename,
+      mime,
+      content
+    });
+    return;
+  }
+
+  // Browser fallback
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ————— CSV Export —————
 export function exportSpeciesCSV() {
+  const datePart = todayString();
+  const filename = `AVIFAUNA_OBS_${datePart}_csv.csv`;
+
   const headers = [
     'PROJECT_ID','POINT_ID','OBSERVER','SURVEY_TYPE','SURVEY_LENGTH',
     'WIND','WIND_DIR','TEMP_C','PRECIP','SITE_HABITAT',
     'SPECIES','SP_Count','RANGE','BEARING','PASS_HT','FLIGHT_DIR',
     'NOTE','OBS_TIMESTAMP','BREEDING'
   ];
-
   const rows = [headers];
 
   speciesMarkers.forEach(m => {
@@ -43,11 +83,14 @@ export function exportSpeciesCSV() {
     )
     .join('\n');
 
-  triggerDownload(csv, 'species_data.csv', 'text/csv');
+  triggerDownload(csv, filename, 'text/csv');
 }
 
 // ————— GeoJSON Export —————
 export function exportSpeciesGeoJSON() {
+  const datePart = todayString();
+  const filename = `AVIFAUNA_OBS_${datePart}_geojson.geojson`;
+
   const features = speciesMarkers
     .filter(m => m?.marker?.getLatLng)
     .map(m => {
@@ -82,17 +125,19 @@ export function exportSpeciesGeoJSON() {
   const geojson = { type: "FeatureCollection", features };
   triggerDownload(
     JSON.stringify(geojson, null, 2),
-    'species_data.geojson',
+    filename,
     'application/json'
   );
 }
 
 // ————— KML Export —————
 export function exportSpeciesKML() {
+  const datePart = todayString();
+  const filename = `AVIFAUNA_OBS_${datePart}_kml.kml`;
+
   const header = `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
   <Document><name>Species Observations</name>`;
-
   const footer = `  </Document>
 </kml>`;
 
@@ -133,37 +178,7 @@ export function exportSpeciesKML() {
   const kml = `${header}\n${placemarks}\n${footer}`;
   triggerDownload(
     kml,
-    'species_data.kml',
+    filename,
     'application/vnd.google-earth.kml+xml'
   );
-}
-
-// ————— triggerDownload with browser fallback —————
-function triggerDownload(content, filename, mime) {
-  const isCSV = mime === 'text/csv';
-
-  // Native handler only for non-CSV
-  if (!isCSV &&
-      window.webkit &&
-      window.webkit.messageHandlers &&
-      window.webkit.messageHandlers.fileExport) {
-    window.webkit.messageHandlers.fileExport.postMessage({
-      filename,
-      mime,
-      content
-    });
-    return;
-  }
-
-  // Browser fallback
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
