@@ -14,30 +14,33 @@ export function exportSpeciesCSV() {
   speciesMarkers.forEach(m => {
     if (!m) return;
     rows.push([
-      m.projectID || '',
-      m.pointID || '',
-      m.observer || '',
-      m.surveyType || '',
-      m.surveyLength || '',
-      m.wind || '',
-      m.windDir || '',
-      m.tempC || '',
-      m.precip || '',
-      m.siteHabitat || '',
-      m.code || '',
-      m.count || '',
-      m.range || '',
-      m.bearing || '',
-      m.passHt || '',
-      m.flightDir || '',
-      m.note || '',
-      m.timestamp || '',
-      m.breeding || ''
+      m.projectID,
+      m.pointID,
+      m.observer,
+      m.surveyType,
+      m.surveyLength,
+      m.wind,
+      m.windDir,
+      m.tempC,
+      m.precip,
+      m.siteHabitat,
+      m.code,
+      m.count,
+      m.range,
+      m.bearing,
+      m.passHt,
+      m.flightDir,
+      m.note,
+      m.timestamp,
+      m.breeding
     ]);
   });
 
   const csv = rows
-    .map(row => row.map(val => `"${val.replace(/"/g, '""')}"`).join(','))
+    .map(row => row
+      .map(val => `"${String(val).replace(/"/g, '""')}"`)
+      .join(',')
+    )
     .join('\n');
 
   triggerDownload(csv, 'species_data.csv', 'text/csv');
@@ -137,28 +140,23 @@ export function exportSpeciesKML() {
 
 // ————— triggerDownload with browser fallback —————
 function triggerDownload(content, filename, mime) {
-  // Native iOS WKWebView handler?
-  if (
-    window.webkit &&
-    window.webkit.messageHandlers &&
-    window.webkit.messageHandlers.fileExport
-  ) {
+  const isCSV = mime === 'text/csv';
+
+  // Native handler only for non-CSV
+  if (!isCSV &&
+      window.webkit &&
+      window.webkit.messageHandlers &&
+      window.webkit.messageHandlers.fileExport) {
     window.webkit.messageHandlers.fileExport.postMessage({
-      filename: filename,
-      mime: mime,
-      content: content
+      filename,
+      mime,
+      content
     });
     return;
   }
 
   // Browser fallback
-  let blob;
-  if (mime.startsWith('text/') || mime === 'application/json') {
-    blob = new Blob([content], { type: mime });
-  } else {
-    // KML or other xml
-    blob = new Blob([content], { type: mime });
-  }
+  const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
