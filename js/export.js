@@ -1,30 +1,35 @@
 import { speciesMarkers } from './storageData.js';
-import { speciesList }    from './species_list.js';
 
-// Build a quick lookup from code → full name
-const nameLookup = speciesList.reduce((acc, sp) => {
-  acc[sp.code] = sp.name;
-  return acc;
-}, {});
-
-/** Utility: today’s date as YYYYMMDD */
+// Utility: get today's date as YYYYMMDD
 function todayString() {
   const d = new Date();
-  return d.getFullYear().toString() +
-    String(d.getMonth() + 1).padStart(2,'0') +
-    String(d.getDate()).padStart(2,'0');
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}${mm}${dd}`;
 }
 
-/** Utility: download a file */
+// Utility: trigger file download (native or browser fallback)
 function triggerDownload(content, filename, mime) {
-  if (window.webkit?.messageHandlers?.fileExport) {
-    window.webkit.messageHandlers.fileExport.postMessage({ filename, mime, content });
+  // Native WKWebView handler (iOS)
+  if (
+    window.webkit &&
+    window.webkit.messageHandlers &&
+    window.webkit.messageHandlers.fileExport
+  ) {
+    window.webkit.messageHandlers.fileExport.postMessage({
+      filename,
+      mime,
+      content
+    });
     return;
   }
+
+  // Browser fallback
   const blob = new Blob([content], { type: mime });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
   a.download = filename;
   a.style.display = 'none';
   document.body.appendChild(a);
@@ -41,14 +46,13 @@ export function exportSpeciesCSV() {
   const headers = [
     'PROJECT_ID','POINT_ID','OBSERVER','SURVEY_TYPE','SURVEY_LENGTH',
     'WIND','WIND_DIR','TEMP_C','PRECIP','SITE_HABITAT',
-    'SPECIES_CODE','SPECIES_NAME','SP_Count','RANGE','BEARING',
-    'PASS_HT','FLIGHT_DIR','NOTE','OBS_TIMESTAMP','BREEDING'
+    'SPECIES','SP_Count','RANGE','BEARING','PASS_HT','FLIGHT_DIR',
+    'NOTE','OBS_TIMESTAMP','BREEDING'
   ];
   const rows = [headers];
 
   speciesMarkers.forEach(m => {
     if (!m) return;
-    const code = m.code || '';
     rows.push([
       m.projectID,
       m.pointID,
@@ -60,8 +64,7 @@ export function exportSpeciesCSV() {
       m.tempC,
       m.precip,
       m.siteHabitat,
-      code,
-      nameLookup[code] || '',
+      m.code,
       m.count,
       m.range,
       m.bearing,
@@ -74,7 +77,10 @@ export function exportSpeciesCSV() {
   });
 
   const csv = rows
-    .map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(','))
+    .map(row => row
+      .map(val => `"${String(val).replace(/"/g, '""')}"`)
+      .join(',')
+    )
     .join('\n');
 
   triggerDownload(csv, filename, 'text/csv');
@@ -89,7 +95,6 @@ export function exportSpeciesGeoJSON() {
     .filter(m => m?.marker?.getLatLng)
     .map(m => {
       const { lat, lng } = m.marker.getLatLng();
-      const code = m.code || '';
       return {
         type: "Feature",
         geometry: { type: "Point", coordinates: [lng, lat] },
@@ -104,8 +109,7 @@ export function exportSpeciesGeoJSON() {
           TEMP_C:        m.tempC || '',
           PRECIP:        m.precip || '',
           SITE_HABITAT:  m.siteHabitat || '',
-          SPECIES_CODE:  code,
-          SPECIES_NAME:  nameLookup[code] || '',
+          SPECIES:       m.code || '',
           SP_Count:      m.count || '',
           RANGE:         m.range || '',
           BEARING:       m.bearing || '',
@@ -141,15 +145,10 @@ export function exportSpeciesKML() {
     .filter(m => m?.marker?.getLatLng)
     .map(m => {
       const { lat, lng } = m.marker.getLatLng();
-      const code = m.code || '';
-      const fullName = nameLookup[code] || '';
-      // show "code — name" in <name>
-      const displayName = fullName ? `${code} — ${fullName}` : code;
-
+      const name = m.code || 'Species';
       const desc = `
 <b>Observer:</b> ${m.observer || ''}<br/>
-<b>Species Code:</b> ${code}<br/>
-<b>Species Name:</b> ${fullName}<br/>
+<b>Species:</b> ${m.code || ''}<br/>
 <b>Count:</b> ${m.count || ''}<br/>
 <b>Breeding:</b> ${m.breeding || ''}<br/>
 <b>Survey Type:</b> ${m.surveyType || ''}<br/>
@@ -169,7 +168,7 @@ export function exportSpeciesKML() {
 
       return `
   <Placemark>
-    <name>${displayName}</name>
+    <name>${name}</name>
     <description><![CDATA[${desc}]]></description>
     <Point><coordinates>${lng},${lat},0</coordinates></Point>
   </Placemark>`;
