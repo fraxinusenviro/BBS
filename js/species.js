@@ -143,18 +143,65 @@ export function createSpeciesPopupHTML(index, code, count, breeding, note, passH
     </div>
 
     <div class="form-row">
-      <label>Breeding:</label>
-      <select id="breeding-${index}">
-        <option value="">None</option>
-        <option value="X" ${breeding === 'X' ? 'selected' : ''}>Observed (X)</option>
-        <option value="H" ${breeding === 'H' ? 'selected' : ''}>Possible – Singing (H)</option>
-        <option value="S" ${breeding === 'S' ? 'selected' : ''}>Possible – Territorial (S)</option>
-        <option value="P" ${breeding === 'P' ? 'selected' : ''}>Probable – Pair (P)</option>
-        <option value="T" ${breeding === 'T' ? 'selected' : ''}>Probable – Agitated (T)</option>
-        <option value="C" ${breeding === 'C' ? 'selected' : ''}>Confirmed – Nest (C)</option>
-      </select>
-    </div>
-
+  <label>Breeding:</label>
+  <select id="breeding-${index}">
+    <option value="">None</option>
+    <option value="X" ${breeding === 'X' ? 'selected' : ''}>
+      Observed – Species observed in its breeding season (no breeding evidence) (X)
+    </option>
+    <option value="H" ${breeding === 'H' ? 'selected' : ''}>
+      Possible – Species observed in its breeding season in suitable nesting habitat (H)
+    </option>
+    <option value="S" ${breeding === 'S' ? 'selected' : ''}>
+      Possible – Singing male(s) present, or breeding calls heard, in suitable nesting habitat (S)
+    </option>
+    <option value="P" ${breeding === 'P' ? 'selected' : ''}>
+      Probable – Pair observed in suitable nesting habitat in nesting season (P)
+    </option>
+    <option value="T" ${breeding === 'T' ? 'selected' : ''}>
+      Probable – Permanent territory presumed through territorial song, or repeated adult presence (T)
+    </option>
+    <option value="D" ${breeding === 'D' ? 'selected' : ''}>
+      Probable – Courtship or display, including courtship feeding or copulation (D)
+    </option>
+    <option value="V" ${breeding === 'V' ? 'selected' : ''}>
+      Probable – Visiting probable nest site (V)
+    </option>
+    <option value="A" ${breeding === 'A' ? 'selected' : ''}>
+      Probable – Agitated behaviour or anxiety calls of an adult (A)
+    </option>
+    <option value="B" ${breeding === 'B' ? 'selected' : ''}>
+      Probable – Brood patch on adult female or cloacal protuberance on adult male (B)
+    </option>
+    <option value="N" ${breeding === 'N' ? 'selected' : ''}>
+      Probable – Nest‐building or excavation of nest hole by wrens and woodpeckers (N)
+    </option>
+    <option value="NB" ${breeding === 'NB' ? 'selected' : ''}>
+      Confirmed – Nest building or carrying nest materials (NB)
+    </option>
+    <option value="DD" ${breeding === 'DD' ? 'selected' : ''}>
+      Confirmed – Distraction display or injury feigning (DD)
+    </option>
+    <option value="NU" ${breeding === 'NU' ? 'selected' : ''}>
+      Confirmed – Used nest or egg shells found (NU)
+    </option>
+    <option value="FY" ${breeding === 'FY' ? 'selected' : ''}>
+      Confirmed – Recently fledged or downy young (FY)
+    </option>
+    <option value="AE" ${breeding === 'AE' ? 'selected' : ''}>
+      Confirmed – Adult entering or leaving nest indicating occupied nest (AE)
+    </option>
+    <option value="FS" ${breeding === 'FS' ? 'selected' : ''}>
+      Confirmed – Adult carrying fecal sac (FS)
+    </option>
+    <option value="CF" ${breeding === 'CF' ? 'selected' : ''}>
+      Confirmed – Adult carrying food for young (CF)
+    </option>
+    <option value="NE" ${breeding === 'NE' ? 'selected' : ''}>
+      Confirmed – Nest containing eggs (NE)
+    </option>
+  </select>
+</div>
     <div class="form-row">
       <label>Flyover Height:</label>
       <input type="text" id="passHeight-${index}" value="${passHeight}" placeholder="e.g., 50m" />
